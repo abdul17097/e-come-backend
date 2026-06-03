@@ -32,7 +32,6 @@ export const addProduct = async (req, res) => {
 
 export const allProducts = async (req, res) => {
   const { search, category, limit = 10, skip, sort } = req.query;
-  console.log(search);
 
   try {
     const matchStage = { stock: { $gt: 0 } };
@@ -57,8 +56,72 @@ export const allProducts = async (req, res) => {
     const products = await Product.aggregate([
       { $match: matchStage },
       { $sort: sortStage },
-      { $skip: Number(skip) },
-      { $limit: Number(limit) },
+      { $skip: Number(skip) || 0 },
+      { $limit: Number(limit) || 10 },
+    ]);
+
+    // const products = await Product.aggregate([
+    //   {
+    //     $match: {
+    //       $and: [
+    //         search
+    //           ? {
+    //               title: { $regex: search, $options: "i" },
+    //             }
+    //           : {},
+    //         category
+    //           ? {
+    //               category: { $regex: category, $options: "i" },
+    //             }
+    //           : {},
+
+    //       ],
+    //     },
+    //   },
+    //   {
+    //     $skip: skip,
+    //   },
+    //   {
+    //     $limit: limit,
+    //   },
+    // ]);
+    res.status(200).json({
+      success: true,
+      data: { products, totalProduct },
+    });
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+export const allProductsForAdmin = async (req, res) => {
+  const { search, category, limit = 10, skip, sort } = req.query;
+  console.log(search);
+
+  try {
+    const matchStage = {};
+
+    if (search) {
+      matchStage.title = { $regex: search, $options: "i" };
+    }
+    if (category) {
+      matchStage.category = { $regex: category, $options: "i" };
+    }
+
+    var sortStage = { createdAt: -1 };
+
+    if (sort === "acen") sortStage = { createdAt: 1 };
+
+    const pipline = [];
+    // if(skip){
+    //   pipline.push({ $limit: Number(limit) })
+    // }
+
+    const totalProduct = await Product.countDocuments();
+    const products = await Product.aggregate([
+      { $match: matchStage },
+      { $sort: sortStage },
+      { $skip: Number(skip) || 0 },
+      { $limit: Number(limit) || 10 },
     ]);
 
     // const products = await Product.aggregate([
@@ -157,7 +220,17 @@ export const userReview = async (req, res) => {
     }
 
     // 2. Find the product
-    const product = await Product.findById(productId);
+    const product = await Product.aggregate([
+      { $match: { _id: new mongoose.Types.ObjectId(productId) } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "reviews.user",
+          foreignField: "_id",
+          as: "reviewers",
+        },
+      },
+    ]);
 
     if (!product) {
       return res.status(404).json({
@@ -215,6 +288,29 @@ export const userReview = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || "Failed to submit review",
+    });
+  }
+};
+
+export const getSingleProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      data: product,
+    });
+  } catch (error) {
+    console.error("Get Single Product Error: ", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
     });
   }
 };
