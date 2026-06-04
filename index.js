@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 5000;
 
 app.use(
   cors({
-    origin: "https://e-come-frontend.vercel.app/" || "*",
+    origin: "https://e-come-frontend.vercel.app" || "*",
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: [
