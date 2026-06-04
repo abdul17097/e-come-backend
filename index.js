@@ -37,6 +37,10 @@ app.use(
 app.use("/api", allRoutes);
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.log(`http://localhost:${PORT}`);
+  });
+}
+
+export default app;
