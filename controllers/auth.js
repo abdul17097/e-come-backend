@@ -90,6 +90,8 @@ export const logout = async (req, res) => {
     // 2. Clear the cookie using the exact same options it was created with
     res.clearCookie("token", {
       httpOnly: true,
+      secure: true,      // Yeh hona lazmi hai
+  sameSite: 'none'
     });
 
     // 3. Return clean, consistent success payload
