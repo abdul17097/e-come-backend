@@ -43,6 +43,7 @@ export const login = async (req, res) => {
     return res
       .cookie("token", token, {
         httpOnly: true,
+        secure:true,
         credential: true,
       })
       .status(200)
